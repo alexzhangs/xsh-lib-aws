@@ -425,6 +425,25 @@ function config () {
         done
     }
 
+    # shellcheck disable=SC2034
+    function __apply_domain_derivation_rule__ () {    
+        declare base_domain=${1:?} v2ray=${2:-0}
+        declare SSMAdminEmail SSMDomain L2TPDomain SSDomain
+
+        SSMAdminEmail=admin@${base_domain}
+        SSMDomain=admin.ss.${base_domain}
+        L2TPDomain=vpn.${base_domain}
+
+        if [[ $v2ray -eq 1 ]]; then
+            SSDomain=v2ray.ss.${base_domain}
+        else
+            SSDomain=ss.${base_domain}
+        fi
+
+        # apply the override values from the environment variables
+        __set_to_prefix_if_prefix_is_empty__ XACVC_XACC_OPTIONS_ SSMAdminEmail SSMDomain L2TPDomain SSDomain
+    }
+
 
     # main
 
@@ -510,23 +529,9 @@ function config () {
         if_mgr_stack_json=1
     fi
 
-    declare SSMAdminEmail SSMDomain L2TPDomain SSDomain
-
     # apply the derivation rules for domains and email address if base domain is set
-    # shellcheck disable=SC2034
     if [[ -n ${XACVC_BASE_DOMAIN} ]]; then
-        SSMAdminEmail=admin@${XACVC_BASE_DOMAIN}
-        SSMDomain=admin.ss.${XACVC_BASE_DOMAIN}
-        L2TPDomain=vpn.${XACVC_BASE_DOMAIN}
-
-        if [[ $XACVC_XACC_OPTIONS_SSV2Ray -eq 1 ]]; then
-            SSDomain=v2ray.ss.${XACVC_BASE_DOMAIN}
-        else
-            SSDomain=ss.${XACVC_BASE_DOMAIN}
-        fi
-
-        # apply the override values from the environment variables
-        __set_to_prefix_if_prefix_is_empty__ XACVC_XACC_OPTIONS_ SSMAdminEmail SSMDomain L2TPDomain SSDomain
+        __apply_domain_derivation_rule__ "$XACVC_BASE_DOMAIN" "$XACVC_XACC_OPTIONS_SSV2Ray"
     fi
 
     # loop the list to generate config files
